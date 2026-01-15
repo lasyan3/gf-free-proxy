@@ -425,11 +425,11 @@ async def torznab_api(
             api_token=apikey,
         )
 
-        # Mock result for indexer validation tests (empty tvsearch)
-        # Sonarr/Prowlarr test indexers by searching TV categories without query
+        # Mock result for indexer validation tests (empty search)
+        # Sonarr/Radarr/Prowlarr test indexers by searching without query
         # If no results, provide a mock to pass validation
-        if not torrents and t in ("tvsearch", "tv-search") and not q and not imdbid:
-            logger.info("Validation test detected - returning mock TV result")
+        if not torrents and not q and not imdbid:
+            logger.info("Validation test detected - returning mock result")
             mock_torrent = {
                 "id": "mock-validation",
                 "attributes": {
