@@ -112,9 +112,11 @@ Dans **Prowlarr** → Indexers → Add → Generic Torznab :
 ## Configuration Prowlarr / Sonarr / Radarr
 
 1. **Indexers** → Add Indexer → **Generic Torznab**
-2. URL: `http://localhost:8888`
-3. API Key: **Votre token GF** (profil GF → Settings → API Key)
-4. Categories: `2000` (Movies), `5000` (TV)
+2. URL : `http://localhost:8888` (ou `http://gf-free-proxy:8888` en Docker)
+3. API Key : **Votre token GF** (profil GF → Settings → API Key)
+4. Cliquer **Test** puis **Save**
+
+Les catégories (`2000` Movies, `5000` TV, etc.) sont configurables après dans Prowlarr pour filtrer les recherches, mais ne sont pas nécessaires pour la validation.
 
 > Le token GF est passé via le champ API Key - pas besoin de le stocker dans config.py
 
