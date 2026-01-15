@@ -10,8 +10,8 @@ GF_BASE_URL = "https://generation-free.org"
 GF_API_TOKEN = ""  # Depuis votre profil GF → Settings → API Key (optionnel)
 
 # === Filtrage ===
-MIN_AGE_HOURS = 36      # Âge minimum des torrents (délai GF)
-MAX_PAGES = 10          # Pages max à scanner par requête
+MIN_AGE_HOURS = 36      # Âge minimum des torrents (délai GF imposé par le tracker)
+MAX_PAGES = 20          # Pages max à scanner (20 pages = ~72h de contenu avec 1s délai)
 RESULTS_LIMIT = 50      # Résultats max retournés par requête
 
 # === Cache ===

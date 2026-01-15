@@ -35,7 +35,7 @@ except ImportError:
     _GF_BASE_URL = "https://generation-free.org"
     _GF_API_TOKEN = ""
     _MIN_AGE_HOURS = 36
-    _MAX_PAGES = 10
+    _MAX_PAGES = 20
     _RESULTS_LIMIT = 50
     _CACHE_TTL_SECONDS = 300
 
@@ -233,9 +233,9 @@ async def fetch_gf_torrents(
                 f"{len(eligible_torrents)} eligible so far"
             )
 
-            # Respectful delay between pages
+            # Respectful delay between pages (1s to avoid GF rate limiting)
             if page < MAX_PAGES:
-                await asyncio.sleep(0.5)
+                await asyncio.sleep(1.0)
 
     set_cache(cache_key, eligible_torrents)
     return eligible_torrents

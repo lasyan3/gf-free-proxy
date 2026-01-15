@@ -105,7 +105,7 @@ Dans **Prowlarr** → Indexers → Add → Generic Torznab :
 | `GF_BASE_URL` | `https://generation-free.org` | URL du tracker |
 | `GF_API_TOKEN` | `` | Token API (optionnel si passé via Prowlarr) |
 | `MIN_AGE_HOURS` | `36` | Âge minimum des torrents |
-| `MAX_PAGES` | `10` | Pages max à scanner |
+| `MAX_PAGES` | `20` | Pages max à scanner |
 | `RESULTS_LIMIT` | `50` | Résultats max retournés |
 | `CACHE_TTL_SECONDS` | `300` | Durée du cache (5 min) |
 
