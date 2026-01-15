@@ -427,7 +427,7 @@ Page 6: 25 torrents, 0 eligible so far
 Page 7: 25 torrents, 0 eligible so far
 Page 8: 25 torrents, 0 eligible so far
 Page 9: 25 torrents, 0 eligible so far
-Page 5: 25 torrents, 0 eligible so far
+Page 10: 25 torrents, 0 eligible so far
 Returning 0 eligible torrents
 ```
 
@@ -536,10 +536,15 @@ rss_start_page = 5 if not q and not imdbid else 1
 ```
 RSS (no query):
   Page 5: 25 torrents, 0 eligible (still < 36h)
-  Page 11: 25 torrents, 22 eligible ✅
-  Page 12: 25 torrents, 47 eligible ✅
-  Page 13: Reached 50 limit → STOP
-  Total: 50 RSS items returned in 5s
+  Page 6: 25 torrents, 0 eligible
+  Page 7: 25 torrents, 0 eligible
+  Page 8: 25 torrents, 0 eligible
+  Page 9: 25 torrents, 0 eligible
+  Page 10: 25 torrents, 0 eligible
+  Page 11: 25 torrents, 21 eligible ✅
+  Page 12: 25 torrents, 46 eligible ✅
+  Reached 50 limit → STOP
+  Total: 50 RSS items returned in 9s
 
 Specific search (query="avatar"):
   Page 1: 19 torrents, 19 eligible ✅
@@ -633,4 +638,4 @@ curl -s "http://10.10.40.58:7878/api/v3/release?movieId=<ID>" \
 **24/24 tests passed. System is production-ready.**
 
 ### RSS Fix Applied
-RSS now starts at page 5 to skip < 36h content, returning 50 eligible results in ~5s. Specific searches still start at page 1 for fastest results.
+RSS now starts at page 5 to skip < 36h content, returning 50 eligible results in ~9s. Specific searches still start at page 1 for fastest results.
