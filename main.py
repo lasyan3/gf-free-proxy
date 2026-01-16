@@ -189,6 +189,13 @@ async def fetch_gf_torrents(
                     for i, cat_id in enumerate(gf_cats):
                         params[f"categories[{i}]"] = cat_id
 
+            # Season/Episode filtering (for TV searches via Sonarr)
+            if season is not None:
+                params["seasonNumber"] = season
+
+            if episode is not None:
+                params["episodeNumber"] = episode
+
             url = f"{GF_BASE_URL}/api/torrents/filter"
             logger.info(f"Fetching page {page}: {url} (query={query})")
 
@@ -434,22 +441,36 @@ async def torznab_api(
         # Mock result for indexer validation tests (empty search)
         # Sonarr/Radarr/Prowlarr test indexers by searching without query
         # If no results, provide a mock to pass validation
+        # We return both a Movie and TV mock so both Radarr and Sonarr validate successfully
         if not torrents and not q and not imdbid:
-            logger.info("Validation test detected - returning mock result")
-            mock_torrent = {
-                "id": "mock-validation",
+            logger.info("Validation test detected - returning mock results (Movie + TV)")
+            mock_movie = {
+                "id": "mock-validation-movie",
                 "attributes": {
-                    "name": "GF-Free Proxy Validation Test",
+                    "name": "GF-Free Proxy Validation Movie",
                     "created_at": "2020-01-01T00:00:00Z",
                     "size": 1000000000,
                     "seeders": 10,
                     "leechers": 2,
-                    "category_id": 2,
+                    "category_id": 1,  # Films
                     "info_hash": "0000000000000000000000000000000000000000",
                     "freeleech": "0%",
                 }
             }
-            torrents = [mock_torrent]
+            mock_tv = {
+                "id": "mock-validation-tv",
+                "attributes": {
+                    "name": "GF-Free Proxy Validation TV",
+                    "created_at": "2020-01-01T00:00:00Z",
+                    "size": 1000000000,
+                    "seeders": 10,
+                    "leechers": 2,
+                    "category_id": 2,  # Séries
+                    "info_hash": "0000000000000000000000000000000000000001",
+                    "freeleech": "0%",
+                }
+            }
+            torrents = [mock_movie, mock_tv]
 
         # Apply offset/limit if provided
         if offset:
