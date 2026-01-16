@@ -1,12 +1,14 @@
-# Docker Compose pour test local
-# Usage: docker compose up -d --build
+# Docker Compose pour GF-Free Proxy
+# Usage: docker compose up -d
 
 services:
   gf-free-proxy:
-    build: .
+    image: ghcr.io/bilou778/gf-free-proxy:latest
+    # build: .  # Décommenter pour build local au lieu de l'image pré-construite
     container_name: gf-free-proxy
     environment:
       - MIN_AGE_HOURS=37
+      - LISTEN_PORT=${LISTEN_PORT:-8888}
     ports:
-      - "8888:8888"
+      - "${LISTEN_PORT:-8888}:${LISTEN_PORT:-8888}"
     restart: unless-stopped

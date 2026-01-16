@@ -49,43 +49,50 @@ sudo systemctl status gf-free-proxy
 
 Pour les utilisateurs ayant une stack *arr (Sonarr, Radarr, Prowlarr) via Docker.
 
-### Option 1 : Ajout à un docker-compose existant
+### Option 1 : Image pré-construite (recommandé)
 
-Ajouter ce service à votre `docker-compose.yml` :
+```bash
+docker run -d \
+  --name gf-free-proxy \
+  -p 8888:8888 \
+  --restart unless-stopped \
+  ghcr.io/bilou778/gf-free-proxy:latest
+```
+
+Ou avec docker-compose :
 
 ```yaml
 services:
-  # ... vos autres services (prowlarr, sonarr, radarr, etc.)
-
   gf-free-proxy:
-    build: ./gf-free-proxy  # chemin vers ce repo cloné
+    image: ghcr.io/bilou778/gf-free-proxy:latest
     container_name: gf-free-proxy
     environment:
-      - MIN_AGE_HOURS=37        # optionnel, 37h par défaut (36h GF + 1h marge)
-      # GF_API_TOKEN n'est PAS nécessaire ici - passez-le via Prowlarr
+      - MIN_AGE_HOURS=37
+    ports:
+      - "8888:8888"
     restart: unless-stopped
-    # Si vos *arr sont sur un réseau custom, ajoutez-le ici :
-    # networks:
-    #   - arr-network
 ```
 
-Puis :
-
-```bash
-# Cloner le repo dans votre dossier docker
-git clone https://github.com/Bilou778/gf-free-proxy.git
-
-# Lancer (l'image se construit localement)
-docker compose up -d --build gf-free-proxy
-```
-
-### Option 2 : Standalone
+### Option 2 : Build local
 
 ```bash
 git clone https://github.com/Bilou778/gf-free-proxy.git
 cd gf-free-proxy
 docker build -t gf-free-proxy .
 docker run -d --name gf-free-proxy -p 8888:8888 --restart unless-stopped gf-free-proxy
+```
+
+### Port personnalisé
+
+Pour utiliser un port différent (ex: 9999) :
+
+```bash
+docker run -d \
+  --name gf-free-proxy \
+  -e LISTEN_PORT=9999 \
+  -p 9999:9999 \
+  --restart unless-stopped \
+  ghcr.io/bilou778/gf-free-proxy:latest
 ```
 
 > Image basée sur Alpine Linux (~85 MB), compatible avec les autres containers LinuxServer.io de la stack *arr.
@@ -104,10 +111,12 @@ Dans **Prowlarr** → Indexers → Add → Generic Torznab :
 |----------|--------|-------------|
 | `GF_BASE_URL` | `https://generation-free.org` | URL du tracker |
 | `GF_API_TOKEN` | `` | Token API (optionnel si passé via Prowlarr) |
-| `MIN_AGE_HOURS` | `36` | Âge minimum des torrents |
+| `MIN_AGE_HOURS` | `37` | Âge minimum des torrents |
 | `MAX_PAGES` | `20` | Pages max à scanner |
 | `RESULTS_LIMIT` | `50` | Résultats max retournés |
 | `CACHE_TTL_SECONDS` | `300` | Durée du cache (5 min) |
+| `LISTEN_HOST` | `0.0.0.0` | Adresse d'écoute |
+| `LISTEN_PORT` | `8888` | Port d'écoute |
 
 ## Configuration Prowlarr / Sonarr / Radarr
 

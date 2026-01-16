@@ -27,6 +27,8 @@ try:
         MAX_PAGES as _MAX_PAGES,
         RESULTS_LIMIT as _RESULTS_LIMIT,
         CACHE_TTL_SECONDS as _CACHE_TTL_SECONDS,
+        LISTEN_HOST as _LISTEN_HOST,
+        LISTEN_PORT as _LISTEN_PORT,
         CATEGORY_MAP,
         TORZNAB_TO_GF,
     )
@@ -38,6 +40,8 @@ except ImportError:
     _MAX_PAGES = 20
     _RESULTS_LIMIT = 50
     _CACHE_TTL_SECONDS = 300
+    _LISTEN_HOST = "0.0.0.0"
+    _LISTEN_PORT = 8888
 
     # Mappings par défaut (standard, rarement modifiés)
     CATEGORY_MAP = {
@@ -60,6 +64,8 @@ MIN_AGE_HOURS = int(os.getenv("MIN_AGE_HOURS", str(_MIN_AGE_HOURS)))
 MAX_PAGES = int(os.getenv("MAX_PAGES", str(_MAX_PAGES)))
 RESULTS_LIMIT = int(os.getenv("RESULTS_LIMIT", str(_RESULTS_LIMIT)))
 CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", str(_CACHE_TTL_SECONDS)))
+LISTEN_HOST = os.getenv("LISTEN_HOST", _LISTEN_HOST)
+LISTEN_PORT = int(os.getenv("LISTEN_PORT", str(_LISTEN_PORT)))
 
 # Logging
 logging.basicConfig(
@@ -521,4 +527,4 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8888)
+    uvicorn.run(app, host=LISTEN_HOST, port=LISTEN_PORT)
