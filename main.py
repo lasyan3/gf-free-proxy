@@ -34,7 +34,7 @@ except ImportError:
     # Pas de config.py (mode Docker) - utiliser les défauts
     _GF_BASE_URL = "https://generation-free.org"
     _GF_API_TOKEN = ""
-    _MIN_AGE_HOURS = 36
+    _MIN_AGE_HOURS = 37
     _MAX_PAGES = 20
     _RESULTS_LIMIT = 50
     _CACHE_TTL_SECONDS = 300

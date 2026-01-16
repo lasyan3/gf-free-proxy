@@ -61,7 +61,7 @@ services:
     build: ./gf-free-proxy  # chemin vers ce repo cloné
     container_name: gf-free-proxy
     environment:
-      - MIN_AGE_HOURS=36        # optionnel, 36h par défaut
+      - MIN_AGE_HOURS=37        # optionnel, 37h par défaut (36h GF + 1h marge)
       # GF_API_TOKEN n'est PAS nécessaire ici - passez-le via Prowlarr
     restart: unless-stopped
     # Si vos *arr sont sur un réseau custom, ajoutez-le ici :
