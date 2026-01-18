@@ -7,7 +7,8 @@ services:
     # build: .  # Décommenter pour build local au lieu de l'image pré-construite
     container_name: gf-free-proxy
     environment:
-      - MIN_AGE_HOURS=37
+      # 30h délai GF + 2h marge de sécurité (décalage possible des serveurs GF pouvant causer des erreurs 403/500)
+      - MIN_AGE_HOURS=32
       - LISTEN_PORT=${LISTEN_PORT:-8888}
     ports:
       - "${LISTEN_PORT:-8888}:${LISTEN_PORT:-8888}"

@@ -1,8 +1,9 @@
 """
-GF-Free Proxy - Torznab Proxy avec filtrage 36h pour Generation-Free
+GF-Free Proxy - Torznab Proxy avec filtrage 30h pour Generation-Free
 
 Ce proxy intercepte les requêtes Torznab de Prowlarr et ne retourne que les
-torrents de plus de 36h, évitant les erreurs 403 sur les téléchargements automatisés.
+torrents de plus de 30h (32h avec marge de sécurité), évitant les erreurs 403/500
+sur les téléchargements automatisés.
 """
 
 import asyncio
@@ -36,7 +37,7 @@ except ImportError:
     # Pas de config.py (mode Docker) - utiliser les défauts
     _GF_BASE_URL = "https://generation-free.org"
     _GF_API_TOKEN = ""
-    _MIN_AGE_HOURS = 37
+    _MIN_AGE_HOURS = 32  # 30h GF + 2h marge (décalage serveurs GF)
     _MAX_PAGES = 20
     _RESULTS_LIMIT = 50
     _CACHE_TTL_SECONDS = 300
@@ -77,7 +78,7 @@ logger = logging.getLogger("gf-free-proxy")
 # FastAPI app
 app = FastAPI(
     title="GF-Free Proxy",
-    description="Torznab proxy for Generation-Free with 36h age filter",
+    description="Torznab proxy for Generation-Free with 30h age filter",
     version="1.0.0",
 )
 
@@ -340,7 +341,7 @@ def build_torznab_xml(torrents: list[dict], query_type: str = "search", api_toke
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:torznab="http://torznab.com/schemas/2015/feed">
 <channel>
 <title>GF-Free Proxy</title>
-<description>Generation-Free with 36h filter</description>
+<description>Generation-Free with 30h filter</description>
 <link>{GF_BASE_URL}</link>
 {chr(10).join(items_xml)}
 </channel>
@@ -430,7 +431,7 @@ async def torznab_api(
     if t in ("search", "tvsearch", "tv-search", "movie", "movie-search"):
         logger.info(f"Search request: t={t}, q={q}, cat={cat}, imdbid={imdbid}, apikey={'***' if apikey else 'None'}")
 
-        # For RSS (no query), start from page 5 to reach >36h content faster
+        # For RSS (no query), start from page 5 to reach >30h content faster
         # Specific searches start at page 1 to find older content by name
         rss_start_page = 5 if not q and not imdbid else 1
 

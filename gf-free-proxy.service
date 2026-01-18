@@ -1,5 +1,5 @@
 [Unit]
-Description=GF-Free Torznab Proxy (36h filter)
+Description=GF-Free Torznab Proxy (30h filter)
 Documentation=https://github.com/Bilou778/gf-free-proxy
 After=network.target
 

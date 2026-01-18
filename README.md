@@ -1,10 +1,10 @@
 # GF-Free Proxy
 
-Proxy Torznab pour Generation-Free avec filtrage automatique des torrents < 36h.
+Proxy Torznab pour Generation-Free avec filtrage automatique des torrents < 30h.
 
 ## Pourquoi ?
 
-Generation-Free impose un délai de 36h avant de pouvoir télécharger via API/automatisation. Ce proxy filtre automatiquement les torrents trop récents pour éviter les erreurs 403.
+Generation-Free impose un délai de 30h avant de pouvoir télécharger via API/automatisation. Ce proxy filtre automatiquement les torrents trop récents pour éviter les erreurs 403.
 
 ## Installation
 
@@ -67,7 +67,7 @@ services:
     image: ghcr.io/bilou778/gf-free-proxy:main
     container_name: gf-free-proxy
     environment:
-      - MIN_AGE_HOURS=37
+      - MIN_AGE_HOURS=32  # 30h GF + 2h marge (décalage possible des serveurs GF)
     ports:
       - "8888:8888"
     restart: unless-stopped
@@ -111,7 +111,7 @@ Dans **Prowlarr** → Indexers → Add → Generic Torznab :
 |----------|--------|-------------|
 | `GF_BASE_URL` | `https://generation-free.org` | URL du tracker |
 | `GF_API_TOKEN` | `` | Token API (optionnel si passé via Prowlarr) |
-| `MIN_AGE_HOURS` | `37` | Âge minimum des torrents |
+| `MIN_AGE_HOURS` | `32` | Âge minimum des torrents (30h + 2h marge de sécurité) |
 | `MAX_PAGES` | `20` | Pages max à scanner |
 | `RESULTS_LIMIT` | `50` | Résultats max retournés |
 | `CACHE_TTL_SECONDS` | `300` | Durée du cache (5 min) |
