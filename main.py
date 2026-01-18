@@ -1,9 +1,8 @@
 """
-GF-Free Proxy - Torznab Proxy avec filtrage 30h pour Generation-Free
+GF-Free Proxy - Torznab Proxy avec filtrage 36h pour Generation-Free
 
 Ce proxy intercepte les requêtes Torznab de Prowlarr et ne retourne que les
-torrents de plus de 30h (32h avec marge de sécurité), évitant les erreurs 403/500
-sur les téléchargements automatisés.
+torrents de plus de 36h, évitant les erreurs 403 sur les téléchargements automatisés.
 """
 
 import asyncio
@@ -15,8 +14,13 @@ from xml.etree import ElementTree as ET
 
 import httpx
 from dateutil import parser as date_parser
-from fastapi import FastAPI, Query, Response
-from fastapi.responses import PlainTextResponse
+from fastapi import FastAPI, Query, Response, HTTPException
+from fastapi.responses import PlainTextResponse, StreamingResponse
+
+import requests
+from bs4 import BeautifulSoup
+import re
+import pyotp
 
 # Configuration - variables d'environnement avec fallback config.py
 # Priorité : 1) Variables d'environnement  2) config.py  3) Valeurs par défaut
@@ -24,6 +28,9 @@ try:
     from config import (
         GF_BASE_URL as _GF_BASE_URL,
         GF_API_TOKEN as _GF_API_TOKEN,
+        #GF_USERNAME as _GF_USERNAME,
+        #GF_PASSWORD as _GF_PASSWORD,
+        #GF_OTP as _GT_OTP,
         MIN_AGE_HOURS as _MIN_AGE_HOURS,
         MAX_PAGES as _MAX_PAGES,
         RESULTS_LIMIT as _RESULTS_LIMIT,
@@ -37,7 +44,7 @@ except ImportError:
     # Pas de config.py (mode Docker) - utiliser les défauts
     _GF_BASE_URL = "https://generation-free.org"
     _GF_API_TOKEN = ""
-    _MIN_AGE_HOURS = 32  # 30h GF + 2h marge (décalage serveurs GF)
+    _MIN_AGE_HOURS = 37
     _MAX_PAGES = 20
     _RESULTS_LIMIT = 50
     _CACHE_TTL_SECONDS = 300
@@ -61,6 +68,9 @@ except ImportError:
 # Variables d'environnement prioritaires sur config.py
 GF_BASE_URL = os.getenv("GF_BASE_URL", _GF_BASE_URL)
 GF_API_TOKEN = os.getenv("GF_API_TOKEN", _GF_API_TOKEN)
+GF_USERNAME = os.getenv("GF_USERNAME")
+GF_PASSWORD = os.getenv("GF_PASSWORD")
+GF_OTP = os.getenv("GF_OTP")
 MIN_AGE_HOURS = int(os.getenv("MIN_AGE_HOURS", str(_MIN_AGE_HOURS)))
 MAX_PAGES = int(os.getenv("MAX_PAGES", str(_MAX_PAGES)))
 RESULTS_LIMIT = int(os.getenv("RESULTS_LIMIT", str(_RESULTS_LIMIT)))
@@ -78,7 +88,7 @@ logger = logging.getLogger("gf-free-proxy")
 # FastAPI app
 app = FastAPI(
     title="GF-Free Proxy",
-    description="Torznab proxy for Generation-Free with 30h age filter",
+    description="Torznab proxy for Generation-Free with 36h age filter",
     version="1.0.0",
 )
 
@@ -268,12 +278,7 @@ def build_torznab_xml(torrents: list[dict], query_type: str = "search", api_toke
         torrent_id = torrent.get("id", "")
 
         # Download link with token
-        download_link = attrs.get("download_link", "")
-        if download_link and "api_token" not in download_link and token:
-            if "?" in download_link:
-                download_link += f"&api_token={token}"
-            else:
-                download_link += f"?api_token={token}"
+        download_link = f'http://gf-free-proxy:{LISTEN_PORT}/download?id={torrent_id}'
 
         # Publication date (RFC 822 format)
         pub_date = ""
@@ -341,7 +346,7 @@ def build_torznab_xml(torrents: list[dict], query_type: str = "search", api_toke
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:torznab="http://torznab.com/schemas/2015/feed">
 <channel>
 <title>GF-Free Proxy</title>
-<description>Generation-Free with 30h filter</description>
+<description>Generation-Free with 36h filter</description>
 <link>{GF_BASE_URL}</link>
 {chr(10).join(items_xml)}
 </channel>
@@ -431,9 +436,7 @@ async def torznab_api(
     if t in ("search", "tvsearch", "tv-search", "movie", "movie-search"):
         logger.info(f"Search request: t={t}, q={q}, cat={cat}, imdbid={imdbid}, apikey={'***' if apikey else 'None'}")
 
-        # For RSS (no query), start from page 5 to reach >30h content faster
-        # Specific searches start at page 1 to find older content by name
-        rss_start_page = 5 if not q and not imdbid else 1
+        rss_start_page = 1
 
         torrents = await fetch_gf_torrents(
             query=q,
@@ -525,6 +528,119 @@ async def root():
         f"Filtering torrents older than {MIN_AGE_HOURS}h\n"
     )
 
+@app.get("/download")
+def download(id: str):
+
+    print(f'Received download torrent {id}')
+
+    url = f"{GF_BASE_URL}/login"
+
+    session = requests.Session()
+
+    #print('Login')
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)"
+    }
+    response = session.get(url, timeout=10, headers=headers)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    token = soup.select_one('input[name="_token"]')["value"]
+    if not token:
+        raise RuntimeError("Token not found")
+    captcha = soup.select_one('input[name="_captcha"]')["value"]
+    if not captcha:
+        raise RuntimeError("Captcha not found")
+    match = re.search(r'name="([^"]+)"\s+value="(\d{10})"', response.text)
+    if not match:
+        raise RuntimeError("Match not found")
+    ts = match.group(1)
+    tsv = match.group(2)
+
+    payload = {
+        "_token": token,
+        "username": GF_USERNAME,
+        "password": GF_PASSWORD,
+        "_captcha": captcha,
+        "_username": "",
+        ts: tsv
+    }
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "https://example.com",
+        "Referer": url,
+    }
+
+    resp = session.post(url, data=payload, headers=headers)
+    #resp.raise_for_status()
+    #print(f'POST login={resp.status_code}')
+    if not "Verifying..." in resp.text:
+        raise RuntimeError("Login failure")
+    #print(resp.text)
+
+    #print('2FA')
+    tfa_url = f"{GF_BASE_URL}/two-factor-challenge"
+
+    totp = pyotp.TOTP(GF_OTP)
+    code = totp.now()
+
+    payload = {
+        "_token": token,
+        "code": code,
+        "recovery_code": "",
+        "_captcha": captcha,
+        "_username": "",
+        ts: tsv
+    }
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64)",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Origin": "https://example.com",
+        "Referer": url,
+    }
+
+    resp = session.post(tfa_url, data=payload, headers=headers)
+    resp.raise_for_status()
+    #print(f'POST 2FA={resp.status_code}')
+    if not "/logout" in resp.text:
+        raise RuntimeError("2FA failure")
+    #print(resp.text)
+
+    soup = BeautifulSoup(resp.text, "html.parser")
+    logoutToken = soup.select_one('input[name="_token"]')["value"]
+    if not logoutToken:
+        raise RuntimeError("logoutToken not found")
+
+    #print('Download')
+    dl_url = f"{GF_BASE_URL}/torrents/download/{id}"
+    resp = session.get(dl_url, headers=headers)
+    resp.raise_for_status()
+
+    #print('Logout')
+    payload = {
+        "_token": logoutToken,
+    }
+
+    respLogout = session.post(f"{GF_BASE_URL}/logout", data=payload, headers=headers)
+    respLogout.raise_for_status()
+    if "/logout" in respLogout.text:
+        raise RuntimeError("Logout failure")
+    if not "Login" in respLogout.text:
+        raise RuntimeError("Logout failure")
+
+    #return resp.text
+    return StreamingResponse(
+        resp.iter_content(chunk_size=8192),
+        headers=resp.headers
+    )
 
 if __name__ == "__main__":
     import uvicorn
